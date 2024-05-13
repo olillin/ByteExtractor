@@ -3,7 +3,6 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
 
 fun main(args: Array<String>) {
     // Parse args
@@ -53,17 +52,19 @@ fun main(args: Array<String>) {
     val fileLength: Long = inPath.toFile().length()
     val absoluteStart: Long = if (start < 0) fileLength + start
         else start
-    val absoluteEnd: Long = if (end < 0) fileLength + end
+    val absoluteEnd: Long = if (end < 0) fileLength + end + 1
         else end
+    val length = (absoluteEnd - absoluteStart).toInt()
 
     // Copy file
     val inStream = inPath.toFile().inputStream()
     val outStream = outPath.toFile().outputStream()
     try {
-        inStream.skip(absoluteStart)
-        inStream.copyTo(outStream, (absoluteEnd - absoluteStart).toInt())
-
+        inStream.skipNBytes(absoluteStart)
+        val data = inStream.readNBytes(length)
+        outStream.write(data)
         outStream.flush()
+        println("Copied $length bytes to $outPath")
     } finally {
         inStream.close()
         outStream.close()
